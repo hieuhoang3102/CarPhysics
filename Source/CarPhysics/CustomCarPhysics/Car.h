@@ -17,7 +17,15 @@ class CARPHYSICS_API ACar : public APawn
 public:
 	// Sets default values for this pawn's properties
 	ACar();
-
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	USceneComponent* FL_Wheel;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	USceneComponent* FR_Wheel;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	USceneComponent* BL_Wheel;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	USceneComponent* BR_Wheel;
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -28,25 +36,33 @@ protected:
 	UPROPERTY(VisibleAnywhere)
 	UStaticMeshComponent* StaticMesh;
 	
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	USceneComponent* FL_Wheel;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	USceneComponent* FR_Wheel;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	USceneComponent* BL_Wheel;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	USceneComponent* BR_Wheel;
-
 	UPROPERTY(VisibleAnywhere)
 	USpringArmComponent* SpringArm;
 	UPROPERTY(VisibleAnywhere)
 	UCameraComponent* Camera;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Car Stats")
+	UCurveFloat* PowerCurve;
+	
 	void Suspension(USceneComponent* Wheel);
+
+	void Acceleration(USceneComponent* Wheel);
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	float CarMaxSpeed = 2000.0f;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	float WheelSteer;
 public:
+	void SteeringForce(USceneComponent* Wheel);
+
+	void SteeringWheel1(USceneComponent* Wheel, float ActionValue);
+
+	void SteeringWheel2(USceneComponent* Wheel, float ActionValue);
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
+	FVector SuspensionForce;
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 };
