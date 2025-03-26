@@ -32,7 +32,7 @@ void ACarController::SetupInputComponent()
 		EnhancedInputComponent->BindAction(IA_Throught, ETriggerEvent::Completed, this, &ACarController::ThroughtInputAction);
 		EnhancedInputComponent->BindAction(IA_Steer, ETriggerEvent::Triggered, this, &ACarController::SteerInputAction);
 		EnhancedInputComponent->BindAction(IA_Steer, ETriggerEvent::Started, this, &ACarController::SteerInputAction);
-		EnhancedInputComponent->BindAction(IA_Steer, ETriggerEvent::Completed, this, &ACarController::SteerInputAction);
+		EnhancedInputComponent->BindAction(IA_Steer, ETriggerEvent::Completed, this, &ACarController::SteerCompletedAction);
 		
 	}
 }
@@ -40,7 +40,6 @@ void ACarController::SetupInputComponent()
 void ACarController::ThroughtInputAction(const FInputActionValue& Value)
 {
 	const float ActionValue = Value.Get<float>();
-	UKismetSystemLibrary::PrintString(this, FString::Printf(TEXT("MoveForward: %f"), ActionValue), true, true, FColor::Green, 2.0f);
 	AccelInput = ActionValue;
 }
 
@@ -58,8 +57,8 @@ void ACarController::SteerCompletedAction(const FInputActionValue& Value)
 	const float ActionValue = Value.Get<float>();
 	SteerCompleted = ActionValue;
 	ACar* CarHiu = Cast<ACar>(GetPawn());
-	CarHiu->SteeringWheel2(CarHiu->FL_Wheel, ActionValue);
-	CarHiu->SteeringWheel2(CarHiu->FR_Wheel, ActionValue);
+	CarHiu->SteeringWheel2(CarHiu->FL_Wheel);
+	CarHiu->SteeringWheel2(CarHiu->FR_Wheel);
 }
 
 // Called when the game starts or when spawned
