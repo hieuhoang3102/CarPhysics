@@ -51,18 +51,6 @@ void ACar::BeginPlay()
 	
 }
 
-bool ACar::IsOnGround(USceneComponent* Wheel)
-{
-	FVector const StartLocation = Wheel->GetComponentLocation();
-	FVector const EndLocation = Wheel->GetComponentLocation() + FVector{0, 0, -60};
-	FHitResult HitResult;
-	TArray<AActor*> ActorsToIgnore;
-	ActorsToIgnore.Add(this);
-	
-	bool bHit = UKismetSystemLibrary::LineTraceSingle(GetWorld(),StartLocation,EndLocation,static_cast<ETraceTypeQuery>(ECollisionChannel::ECC_Pawn),false,ActorsToIgnore,EDrawDebugTrace::ForOneFrame,HitResult,true,FLinearColor::Red, FLinearColor::Green);
-	return bHit;
-}
-
 void ACar::Suspension(USceneComponent* Wheel)
 {
 	FVector const StartLocation = Wheel->GetComponentLocation();
@@ -92,6 +80,11 @@ void ACar::Suspension(USceneComponent* Wheel)
 		FVector TotalForce = (Offset * Strength) - DampingForce;
 		SuspensionForce = TotalForce;
 		Box->AddForceAtLocation(TotalForce, Wheel->GetComponentLocation());
+	}
+	else
+	{
+		SuspensionForce = FVector::ZeroVector;
+		Box->AddForceAtLocation(FVector::ZeroVector, Wheel->GetComponentLocation());
 	}
 }
 
@@ -171,7 +164,7 @@ void ACar::Acceleration(USceneComponent* Wheel)
 				AvailableTorque = PowerCurve->GetFloatValue(NormalizedSpeed) * CarController->AccelInput;
 				FVector ForceMoveCar = AccelDir* AvailableTorque * CarSpeedChange; //Thay đổi giá trị CarSpeedChange để xe đi nhanh hoặc chậm 
 				Box->AddForceAtLocation(ForceMoveCar, Wheel->GetComponentLocation());
-				//UKismetSystemLibrary::PrintString(this, FString::Printf(TEXT("TotalForce %s"), *Force.ToString()));
+				UKismetSystemLibrary::PrintString(this, FString::Printf(TEXT("TotalForce %s"), *ForceMoveCar.ToString()));
 			}
 		}
 		
@@ -247,10 +240,10 @@ void ACar::Tick(float DeltaTime)
 	Acceleration(BL_Wheel);
 	Acceleration(BR_Wheel);
 
-	// Friction(FL_Wheel);
-	// Friction(FR_Wheel);
-	// Friction(BL_Wheel);
-	// Friction(BR_Wheel);
+	Friction(FL_Wheel);
+	Friction(FR_Wheel);
+	Friction(BL_Wheel);
+	Friction(BR_Wheel);
 
 	DrawDebugLine(GetWorld(), FL_Wheel->GetComponentLocation(),
 		FL_Wheel->GetComponentLocation() + FL_Wheel->GetForwardVector() *100.f, FColor::Blue, false, 0.05f,100.f, 5.f);

@@ -90,8 +90,6 @@ protected:
 	void Friction(USceneComponent* Wheel);
 
 public:
-	bool IsOnGround(USceneComponent* Wheel);
-	
 	void SteeringForce(USceneComponent* Wheel, float TiresGrip);
 
 	void SteeringWheel1(USceneComponent* Wheel, float ActionValue);
