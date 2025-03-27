@@ -48,10 +48,10 @@ protected:
 	FVector SpringHeight = {0,0,-60};
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float Strength = 1000000.0f; //độ cứng của lò xo nâng lốp xe
+	float Strength = 2000000.0f; //độ cứng của lò xo nâng lốp xe
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float DampingCoefficient = 2000.0f; //lực giảm chấn của lốp xe
+	float DampingCoefficient = 1000.0f; //lực giảm chấn của lốp xe
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	float CarMaxSpeedCurve = 2000.0f; //tốc độ lớn nhất của xe	
@@ -75,10 +75,10 @@ protected:
 	float RearTiresGrip = 0.8f;	//độ bám đường lốp sau
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
-	float FrictionStatic = 0.4f; //hệ số ma sát tĩnh
+	float FrictionStatic = 0.6f; //hệ số ma sát tĩnh
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
-	float FrictionDynamic = 0.2f; //hệ số ma sát động
+	float FrictionDynamic = 0.4f; //hệ số ma sát động
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	float Gravity = 980.0f; //Trọng lực

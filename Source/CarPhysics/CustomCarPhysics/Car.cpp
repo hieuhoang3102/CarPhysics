@@ -165,17 +165,6 @@ void ACar::Acceleration(USceneComponent* Wheel)
 				Box->AddForceAtLocation(ForceMoveCar, Wheel->GetComponentLocation());
 			}
 		}
-		
-		// if (FMath::IsNearlyZero(AvailableTorque, 0.01f)) 
-		// {
-		// 	FVector CarVelocity = Box->GetComponentVelocity();
-		// 	//FVector FrictionForce = -Velocity.GetSafeNormal() * FMath::Clamp(FMath::Abs(CarSpeed) * 100.0f, 0.0f, 80.0f);
-		//
-		// 	float FrictionCoefficient = 50.0f; // Tăng hệ số ma sát
-		// 	FVector FrictionForce = -CarVelocity * FrictionCoefficient;
-		// 	Box->AddForce(FrictionForce);
-		// 	//UKismetSystemLibrary::PrintString(this, FString::Printf(TEXT("TotalForce %s"), *Box->GetComponentVelocity().ToString()));
-		// }
 	}
 }
 
