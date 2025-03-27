@@ -54,7 +54,7 @@ void ACar::BeginPlay()
 void ACar::Suspension(USceneComponent* Wheel)
 {
 	FVector const StartLocation = Wheel->GetComponentLocation();
-	FVector const EndLocation = Wheel->GetComponentLocation() + FVector{0, 0, -60};
+	FVector const EndLocation = Wheel->GetComponentLocation() + SpringHeight;
 	FHitResult HitResult;
 	TArray<AActor*> ActorsToIgnore;
 	ActorsToIgnore.Add(this);
@@ -65,7 +65,7 @@ void ACar::Suspension(USceneComponent* Wheel)
 	if(bHit)
 	{
 		//tính độ co và giãn của lò xo bánh xe (Bao gồm cả hướng)
-		FVector Offset = (1 - UKismetMathLibrary::NormalizeToRange(HitResult.Distance, 0.0f, 60.0f)) *
+		FVector Offset = (1 - UKismetMathLibrary::NormalizeToRange(HitResult.Distance, 0.0f, -SpringHeight.Z)) *
 			UKismetMathLibrary::GetDirectionUnitVector(HitResult.TraceEnd, HitResult.TraceStart);
 		
 		//Tính vận tốc theo phương của lò xo
@@ -91,7 +91,7 @@ void ACar::Suspension(USceneComponent* Wheel)
 void ACar::SteeringForce(USceneComponent* Wheel, float TiresGrip)
 {
 	FVector const StartLocation = Wheel->GetComponentLocation();
-	FVector const EndLocation = Wheel->GetComponentLocation() + FVector{0, 0, -60};
+	FVector const EndLocation = Wheel->GetComponentLocation() + SpringHeight;
 	FHitResult HitResult;
 	TArray<AActor*> ActorsToIgnore;
 	ActorsToIgnore.Add(this);
@@ -103,7 +103,6 @@ void ACar::SteeringForce(USceneComponent* Wheel, float TiresGrip)
 	{
 		FVector SteeringDir = Wheel->GetRightVector(); //hướng lực lái
 		FVector TireWorldVel = Box->GetPhysicsLinearVelocityAtPoint(Wheel->GetComponentLocation()); //tính vận tốc bánh xe
-		//UKismetSystemLibrary::PrintString(this, FString::Printf(TEXT("TireWorldVel %s"), *TireWorldVel.ToString()));
 		float SteeringVel = FVector::DotProduct(TireWorldVel, SteeringDir); //vận tốc hướng lái
 
 		//tính giá trị bám đường của lốp xe (0 = không bám, 1 = bám hoàn toàn)
@@ -139,7 +138,7 @@ void ACar::SteeringWheel2(USceneComponent* Wheel)
 void ACar::Acceleration(USceneComponent* Wheel)
 {
 	FVector const StartLocation = Wheel->GetComponentLocation();
-	FVector const EndLocation = Wheel->GetComponentLocation() + FVector{0, 0, -60};
+	FVector const EndLocation = Wheel->GetComponentLocation() + SpringHeight;
 	FHitResult HitResult;
 	TArray<AActor*> ActorsToIgnore;
 	ActorsToIgnore.Add(this);
@@ -164,7 +163,6 @@ void ACar::Acceleration(USceneComponent* Wheel)
 				AvailableTorque = PowerCurve->GetFloatValue(NormalizedSpeed) * CarController->AccelInput;
 				FVector ForceMoveCar = AccelDir* AvailableTorque * CarSpeedChange; //Thay đổi giá trị CarSpeedChange để xe đi nhanh hoặc chậm 
 				Box->AddForceAtLocation(ForceMoveCar, Wheel->GetComponentLocation());
-				UKismetSystemLibrary::PrintString(this, FString::Printf(TEXT("TotalForce %s"), *ForceMoveCar.ToString()));
 			}
 		}
 		
@@ -184,7 +182,7 @@ void ACar::Acceleration(USceneComponent* Wheel)
 void ACar::Friction(USceneComponent* Wheel)
 {
 	FVector const StartLocation = Wheel->GetComponentLocation();
-	FVector const EndLocation = Wheel->GetComponentLocation() + FVector{0, 0, -60};
+	FVector const EndLocation = Wheel->GetComponentLocation() + SpringHeight;
 	FHitResult HitResult;
 	TArray<AActor*> ActorsToIgnore;
 	ActorsToIgnore.Add(this);
@@ -193,15 +191,15 @@ void ACar::Friction(USceneComponent* Wheel)
 
 	if(bHit)
 	{
-		//Box->GetForwardVector() FVector::ForwardVector
+		
 		//tính lực pháp tuyến (N=mg)
 		float NormalForce = CarMass * Gravity;
-
+		
 		//Lấy vận tốc hiện tại của xe
 		FVector CurrentSpeedCar = Box->GetComponentVelocity();
-
+		
 		//nếu xe đứng yên, áp dụng ma sát tĩnh
-		if (CurrentSpeedCar.Size() < 2.0f)
+		if (CurrentSpeedCar.Size() < 5.0f)
 		{
 			FVector FrictionForce = -CurrentSpeedCar.GetSafeNormal() * (FrictionStatic * NormalForce);
 			Box->AddForce(FrictionForce);
