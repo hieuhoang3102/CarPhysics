@@ -5,6 +5,7 @@
 
 #include "CarController.h"
 #include "Camera/CameraComponent.h"
+#include "CapsuleTraceWithRotation/CapsuleTraceUtils.h"
 #include "Components/BoxComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Kismet/GameplayStatics.h"
@@ -33,6 +34,15 @@ ACar::ACar()
 	BR_Wheel = CreateDefaultSubobject<USceneComponent>("BR_Wheel");
 	BR_Wheel->SetupAttachment(Box);
 
+	WheelFL = CreateDefaultSubobject<UStaticMeshComponent>("WheelFL");
+	WheelFL->SetupAttachment(FL_Wheel);
+	WheelFR = CreateDefaultSubobject<UStaticMeshComponent>("WheelFR");
+	WheelFR->SetupAttachment(FR_Wheel);
+	WheelBL = CreateDefaultSubobject<UStaticMeshComponent>("WheelBL");
+	WheelBL->SetupAttachment(BL_Wheel);
+	WheelBR = CreateDefaultSubobject<UStaticMeshComponent>("WheelBR");
+	WheelBR->SetupAttachment(BR_Wheel);
+	
 	SpringArm = CreateDefaultSubobject<USpringArmComponent>("Spring Arm Component");
 	SpringArm->SetupAttachment(Box);
 	Camera = CreateDefaultSubobject<UCameraComponent>("Camera");
@@ -232,14 +242,40 @@ void ACar::Tick(float DeltaTime)
 	Friction(BL_Wheel);
 	Friction(BR_Wheel);
 
-	DrawDebugLine(GetWorld(), FL_Wheel->GetComponentLocation(),
-		FL_Wheel->GetComponentLocation() + FL_Wheel->GetForwardVector() *100.f, FColor::Blue, false, 0.05f,100.f, 5.f);
-	DrawDebugLine(GetWorld(), FR_Wheel->GetComponentLocation(),
-		FR_Wheel->GetComponentLocation() + FR_Wheel->GetForwardVector() *100.f, FColor::Blue, false, 0.05f, 100.f, 5.f);
-	DrawDebugLine(GetWorld(), FL_Wheel->GetComponentLocation(),
-		FL_Wheel->GetComponentLocation() + FVector::UpVector * SuspensionForce.Length(), FColor::Yellow, false, 0.05f, 100.f, 5.f);
-	DrawDebugLine(GetWorld(), FR_Wheel->GetComponentLocation(),
-		FR_Wheel->GetComponentLocation() + FVector::UpVector * SuspensionForce.Length(), FColor::Yellow, false, 0.05f, 100.f, 5.f);
+	// DrawDebugLine(GetWorld(), FL_Wheel->GetComponentLocation(),
+	// 	FL_Wheel->GetComponentLocation() + FL_Wheel->GetForwardVector() *100.f, FColor::Blue, false, 0.05f,100.f, 5.f);
+	// DrawDebugLine(GetWorld(), FR_Wheel->GetComponentLocation(),
+	// 	FR_Wheel->GetComponentLocation() + FR_Wheel->GetForwardVector() *100.f, FColor::Blue, false, 0.05f, 100.f, 5.f);
+	// DrawDebugLine(GetWorld(), FL_Wheel->GetComponentLocation(),
+	// 	FL_Wheel->GetComponentLocation() + FVector::UpVector * SuspensionForce.Length(), FColor::Yellow, false, 0.05f, 100.f, 5.f);
+	// DrawDebugLine(GetWorld(), FR_Wheel->GetComponentLocation(),
+	// 	FR_Wheel->GetComponentLocation() + FVector::UpVector * SuspensionForce.Length(), FColor::Yellow, false, 0.05f, 100.f, 5.f);
+
+	TraceCapsule(FL_Wheel);
+	TraceCapsule(FR_Wheel);
+	TraceCapsule(BL_Wheel);
+	TraceCapsule(BR_Wheel);
+}
+
+void ACar::TraceCapsule(USceneComponent* Wheel)
+{
+	TArray<AActor*> ActorsToIgnore;
+	FHitResult HitResult;
+	TArray<FHitResult> Hits;
+	for (int i = 0; i < 16; i++)
+	{
+		float Radians = (22.5f * i) * PI / 180.f;
+		float Radian2 = (1.875f * (i - 8)) * PI / 180.f;
+		float z = sin(Radians) * 50.f;
+		float y = sin(Radian2) * 50.f;
+		float x = cos(Radians) * 50.f;
+		UCapsuleTraceUtils::CapsuleTraceSingle(GetWorld(), Wheel->GetComponentLocation(),
+		Wheel->GetComponentLocation() + FVector(x,y,z), 10.f, 30.f,
+		FRotator(0.f, Wheel->GetComponentRotation().Yaw, 90.f),
+		TraceTypeQuery1, false,
+		ActorsToIgnore, EDrawDebugTrace::ForOneFrame, HitResult, true,
+		FLinearColor::Green, FLinearColor::Green);
+	}
 }
 
 // Called to bind functionality to input

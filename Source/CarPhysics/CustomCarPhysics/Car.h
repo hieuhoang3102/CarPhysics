@@ -26,6 +26,16 @@ public:
 	USceneComponent* BL_Wheel;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	USceneComponent* BR_Wheel;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UStaticMeshComponent* WheelFL;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UStaticMeshComponent* WheelFR;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UStaticMeshComponent* WheelBL;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UStaticMeshComponent* WheelBR;
+	
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -96,13 +106,14 @@ public:
 	void SteeringForce(USceneComponent* Wheel, float TiresGrip);
 
 	void SteeringWheel1(USceneComponent* Wheel, float ActionValue);
-
+	
 	void SteeringWheel2(USceneComponent* Wheel);
 
 	void Break(USceneComponent* Wheel);
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
+	void TraceCapsule(USceneComponent* Wheel);
 	FVector SuspensionForce;
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
