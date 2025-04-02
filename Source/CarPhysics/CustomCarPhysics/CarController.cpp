@@ -48,8 +48,8 @@ void ACarController::SteerInputAction(const FInputActionValue& Value)
 	const float ActionValue = Value.Get<float>();
 	SteerInput = ActionValue;
 	ACar* CarHiu = Cast<ACar>(GetPawn());
-	CarHiu->SteeringWheel1(CarHiu->FL_Wheel, ActionValue);
-	CarHiu->SteeringWheel1(CarHiu->FR_Wheel, ActionValue);
+	CarHiu->SteeringWheel1(CarHiu->FL_Staff_Wheel, ActionValue);
+	CarHiu->SteeringWheel1(CarHiu->FR_Staff_Wheel, ActionValue);
 }
 
 void ACarController::SteerCompletedAction(const FInputActionValue& Value)
@@ -57,8 +57,8 @@ void ACarController::SteerCompletedAction(const FInputActionValue& Value)
 	const float ActionValue = Value.Get<float>();
 	SteerCompleted = ActionValue;
 	ACar* CarHiu = Cast<ACar>(GetPawn());
-	CarHiu->SteeringWheel2(CarHiu->FL_Wheel);
-	CarHiu->SteeringWheel2(CarHiu->FR_Wheel);
+	CarHiu->SteeringWheel2(CarHiu->FL_Staff_Wheel);
+	CarHiu->SteeringWheel2(CarHiu->FR_Staff_Wheel);
 }
 
 // Called when the game starts or when spawned

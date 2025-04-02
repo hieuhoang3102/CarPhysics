@@ -5,6 +5,7 @@
 
 #include "CarController.h"
 #include "Camera/CameraComponent.h"
+#include "CarPhysics/TraceUtils.h"
 #include "Components/BoxComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Kismet/GameplayStatics.h"
@@ -18,23 +19,46 @@ ACar::ACar()
 	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
+	Root = CreateDefaultSubobject<USceneComponent>("Root");
+	SetRootComponent(Root);
+	
 	Box = CreateDefaultSubobject<UBoxComponent>("Box");
-	Box->SetupAttachment(RootComponent);
+	//SetRootComponent(Box);
+	//Box->SetupAttachment(Root);
 	
 	StaticMesh = CreateDefaultSubobject<UStaticMeshComponent>("StaticMesh");
-	StaticMesh->SetupAttachment(Box);
+	StaticMesh->SetupAttachment(RootComponent);
+
+	FL_Staff_Wheel = CreateDefaultSubobject<USceneComponent>("FL_Staff_Wheel");
+	FL_Staff_Wheel->SetupAttachment(RootComponent);
+	FR_Staff_Wheel = CreateDefaultSubobject<USceneComponent>("FR_Staff_Wheel");
+	FR_Staff_Wheel->SetupAttachment(RootComponent);
+	BL_Staff_Wheel = CreateDefaultSubobject<USceneComponent>("BL_Staff_Wheel");
+	BL_Staff_Wheel->SetupAttachment(RootComponent);
+	BR_Staff_Wheel = CreateDefaultSubobject<USceneComponent>("BR_Staff_Wheel");
+	BR_Staff_Wheel->SetupAttachment(RootComponent);
 	
 	FL_Wheel = CreateDefaultSubobject<USceneComponent>("FL_Wheel");
-	FL_Wheel->SetupAttachment(Box);
+	FL_Wheel->SetupAttachment(FL_Staff_Wheel);
 	FR_Wheel = CreateDefaultSubobject<USceneComponent>("FR_Wheel");
-	FR_Wheel->SetupAttachment(Box);
+	FR_Wheel->SetupAttachment(FR_Staff_Wheel);
 	BL_Wheel = CreateDefaultSubobject<USceneComponent>("BL_Wheel");
-	BL_Wheel->SetupAttachment(Box);
+	BL_Wheel->SetupAttachment(BL_Staff_Wheel);
 	BR_Wheel = CreateDefaultSubobject<USceneComponent>("BR_Wheel");
-	BR_Wheel->SetupAttachment(Box);
+	BR_Wheel->SetupAttachment(BR_Staff_Wheel);
 
+	SM_FL_Wheel = CreateDefaultSubobject<UStaticMeshComponent>("SM_FL_Wheel");
+	SM_FL_Wheel->SetupAttachment(FL_Wheel);
+	SM_FL_Wheel->SetRelativeRotation(FRotator(0, 0, 0));
+	SM_FR_Wheel = CreateDefaultSubobject<UStaticMeshComponent>("SM_FR_Wheel");
+	SM_FR_Wheel->SetupAttachment(FR_Wheel);
+	SM_BL_Wheel = CreateDefaultSubobject<UStaticMeshComponent>("SM_BL_Wheel");
+	SM_BL_Wheel->SetupAttachment(BL_Wheel);
+	SM_BR_Wheel = CreateDefaultSubobject<UStaticMeshComponent>("SM_BR_Wheel");
+	SM_BR_Wheel->SetupAttachment(BR_Wheel);
+	
 	SpringArm = CreateDefaultSubobject<USpringArmComponent>("Spring Arm Component");
-	SpringArm->SetupAttachment(Box);
+	SpringArm->SetupAttachment(RootComponent);
 	Camera = CreateDefaultSubobject<UCameraComponent>("Camera");
 	Camera->SetupAttachment(SpringArm);
 
@@ -54,7 +78,7 @@ void ACar::BeginPlay()
 void ACar::Suspension(USceneComponent* Wheel)
 {
 	FVector const StartLocation = Wheel->GetComponentLocation();
-	FVector const EndLocation = Wheel->GetComponentLocation() + FVector{0, 0, -60};
+	FVector const EndLocation = Wheel->GetComponentLocation() + FVector{0, 0, -90};
 	FHitResult HitResult;
 	TArray<AActor*> ActorsToIgnore;
 	ActorsToIgnore.Add(this);
@@ -65,7 +89,7 @@ void ACar::Suspension(USceneComponent* Wheel)
 	if(bHit)
 	{
 		//tính độ co và giãn của lò xo bánh xe (Bao gồm cả hướng)
-		FVector Offset = (1 - UKismetMathLibrary::NormalizeToRange(HitResult.Distance, 0.0f, 60.0f)) *
+		FVector Offset = (1 - UKismetMathLibrary::NormalizeToRange(HitResult.Distance, 0.0f, 90.0f)) *
 			UKismetMathLibrary::GetDirectionUnitVector(HitResult.TraceEnd, HitResult.TraceStart);
 		
 		//Tính vận tốc theo phương của lò xo
@@ -88,10 +112,10 @@ void ACar::Suspension(USceneComponent* Wheel)
 	}
 }
 
-void ACar::SteeringForce(USceneComponent* Wheel, float TiresGrip)
+void ACar::SteeringForce(USceneComponent* Staff, USceneComponent* Wheel, float TiresGrip)
 {
 	FVector const StartLocation = Wheel->GetComponentLocation();
-	FVector const EndLocation = Wheel->GetComponentLocation() + FVector{0, 0, -60};
+	FVector const EndLocation = Wheel->GetComponentLocation() + FVector{0, 0, -90};
 	FHitResult HitResult;
 	TArray<AActor*> ActorsToIgnore;
 	ActorsToIgnore.Add(this);
@@ -101,7 +125,7 @@ void ACar::SteeringForce(USceneComponent* Wheel, float TiresGrip)
 	//Steering force
 	if(bHit)
 	{
-		FVector SteeringDir = Wheel->GetRightVector(); //hướng lực lái
+		FVector SteeringDir = Staff->GetRightVector(); //hướng lực lái
 		FVector TireWorldVel = Box->GetPhysicsLinearVelocityAtPoint(Wheel->GetComponentLocation()); //tính vận tốc bánh xe
 		//UKismetSystemLibrary::PrintString(this, FString::Printf(TEXT("TireWorldVel %s"), *TireWorldVel.ToString()));
 		float SteeringVel = FVector::DotProduct(TireWorldVel, SteeringDir); //vận tốc hướng lái
@@ -139,7 +163,7 @@ void ACar::SteeringWheel2(USceneComponent* Wheel)
 void ACar::Acceleration(USceneComponent* Wheel)
 {
 	FVector const StartLocation = Wheel->GetComponentLocation();
-	FVector const EndLocation = Wheel->GetComponentLocation() + FVector{0, 0, -60};
+	FVector const EndLocation = Wheel->GetComponentLocation() + FVector{0, 0, -90};
 	FHitResult HitResult;
 	TArray<AActor*> ActorsToIgnore;
 	ActorsToIgnore.Add(this);
@@ -152,39 +176,25 @@ void ACar::Acceleration(USceneComponent* Wheel)
 		FVector AccelDir = Wheel->GetForwardVector(); //hướng gia tốc theo Forward bánh xe
 		float CarSpeed = FVector::DotProduct(Box->GetForwardVector(), Box->GetComponentVelocity()); //tính tốc độ hiện tại của xe theo hướng chuyển động
 		float NormalizedSpeed = FMath::Clamp(FMath::Abs(CarSpeed)/ CarMaxSpeedCurve, 0.1f, 1.0f);
-		//UKismetSystemLibrary::PrintString(this, FString::Printf(TEXT("NormalizedSpeed: %.2f"), NormalizedSpeed));
-
-		float AvailableTorque = 0.0f;
+		//UKismetSystemLibrary::PrintString(this, FString::Printf(TEXT("NormalizedSpeed: %.2f"), NormalizedSpeed))
 		if (PowerCurve)
 		{
 			ACarController* CarController = Cast<ACarController>(GetController());
 			if (CarController)
 			{
-				float AccelInput = CarController->AccelInput;
-				AvailableTorque = PowerCurve->GetFloatValue(NormalizedSpeed) * CarController->AccelInput;
-				FVector ForceMoveCar = AccelDir* AvailableTorque * CarSpeedChange; //Thay đổi giá trị CarSpeedChange để xe đi nhanh hoặc chậm 
+				float AvailableTorque = PowerCurve->GetFloatValue(NormalizedSpeed) * CarController->AccelInput;
+				FVector ForceMoveCar = AccelDir * AvailableTorque * CarSpeedChange; //Thay đổi giá trị CarSpeedChange để xe đi nhanh hoặc chậm 
 				Box->AddForceAtLocation(ForceMoveCar, Wheel->GetComponentLocation());
 				UKismetSystemLibrary::PrintString(this, FString::Printf(TEXT("TotalForce %s"), *ForceMoveCar.ToString()));
 			}
 		}
-		
-		// if (FMath::IsNearlyZero(AvailableTorque, 0.01f)) 
-		// {
-		// 	FVector CarVelocity = Box->GetComponentVelocity();
-		// 	//FVector FrictionForce = -Velocity.GetSafeNormal() * FMath::Clamp(FMath::Abs(CarSpeed) * 100.0f, 0.0f, 80.0f);
-		//
-		// 	float FrictionCoefficient = 50.0f; // Tăng hệ số ma sát
-		// 	FVector FrictionForce = -CarVelocity * FrictionCoefficient;
-		// 	Box->AddForce(FrictionForce);
-		// 	//UKismetSystemLibrary::PrintString(this, FString::Printf(TEXT("TotalForce %s"), *Box->GetComponentVelocity().ToString()));
-		// }
 	}
 }
 
 void ACar::Friction(USceneComponent* Wheel)
 {
 	FVector const StartLocation = Wheel->GetComponentLocation();
-	FVector const EndLocation = Wheel->GetComponentLocation() + FVector{0, 0, -60};
+	FVector const EndLocation = Wheel->GetComponentLocation() + FVector{0, 0, -90};
 	FHitResult HitResult;
 	TArray<AActor*> ActorsToIgnore;
 	ActorsToIgnore.Add(this);
@@ -225,15 +235,15 @@ void ACar::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	Suspension(FL_Wheel);
-	Suspension(FR_Wheel);
-	Suspension(BL_Wheel);
-	Suspension(BR_Wheel);
+	Suspension(FL_Staff_Wheel);
+	Suspension(FR_Staff_Wheel);
+	Suspension(BL_Staff_Wheel);
+	Suspension(BR_Staff_Wheel);
 
-	SteeringForce(FL_Wheel, FrontTiresGrip);
-	SteeringForce(FR_Wheel, FrontTiresGrip);
-	SteeringForce(BL_Wheel, RearTiresGrip);
-	SteeringForce(BR_Wheel, RearTiresGrip);
+	SteeringForce(FL_Staff_Wheel, FL_Wheel, FrontTiresGrip);
+	SteeringForce(FR_Staff_Wheel, FR_Wheel, FrontTiresGrip);
+	SteeringForce(BL_Staff_Wheel, BL_Wheel, RearTiresGrip);
+	SteeringForce(BR_Staff_Wheel, BR_Wheel, RearTiresGrip);
 
 	Acceleration(FL_Wheel);
 	Acceleration(FR_Wheel);
@@ -245,23 +255,43 @@ void ACar::Tick(float DeltaTime)
 	Friction(BL_Wheel);
 	Friction(BR_Wheel);
 
-	DrawDebugLine(GetWorld(), FL_Wheel->GetComponentLocation(),
-		FL_Wheel->GetComponentLocation() + FL_Wheel->GetForwardVector() *100.f, FColor::Blue, false, 0.05f,100.f, 5.f);
-	DrawDebugLine(GetWorld(), FR_Wheel->GetComponentLocation(),
-		FR_Wheel->GetComponentLocation() + FR_Wheel->GetForwardVector() *100.f, FColor::Blue, false, 0.05f, 100.f, 5.f);
-	DrawDebugLine(GetWorld(), FL_Wheel->GetComponentLocation(),
-		FL_Wheel->GetComponentLocation() + FVector::UpVector * SuspensionForce.Length(), FColor::Yellow, false, 0.05f, 100.f, 5.f);
-	DrawDebugLine(GetWorld(), FR_Wheel->GetComponentLocation(),
-		FR_Wheel->GetComponentLocation() + FVector::UpVector * SuspensionForce.Length(), FColor::Yellow, false, 0.05f, 100.f, 5.f);
-}
+	// DrawDebugLine(GetWorld(), FL_Wheel->GetComponentLocation(),
+	// 	FL_Wheel->GetComponentLocation() + FL_Wheel->GetForwardVector() *100.f, FColor::Blue, false, 0.03f,100.f, 5.f);
+	// DrawDebugLine(GetWorld(), FR_Wheel->GetComponentLocation(),
+	// 	FR_Wheel->GetComponentLocation() + FR_Wheel->GetForwardVector() *100.f, FColor::Blue, false, 0.03f, 100.f, 5.f);
+	// DrawDebugLine(GetWorld(), FL_Wheel->GetComponentLocation(),
+	// 	FL_Wheel->GetComponentLocation() + FVector::UpVector * SuspensionForce.Length(), FColor::Yellow, false, 0.02f, 100.f, 5.f);
+	// DrawDebugLine(GetWorld(), FR_Wheel->GetComponentLocation(),
+	// 	FR_Wheel->GetComponentLocation() + FVector::UpVector * SuspensionForce.Length(), FColor::Yellow, false, 0.02f, 100.f, 5.f);
 
+	TraceCapsule(FL_Wheel);
+	TraceCapsule(FR_Wheel);
+	TraceCapsule(BL_Wheel);
+	TraceCapsule(BR_Wheel);
+}
+void ACar::TraceCapsule(USceneComponent* Wheel)
+{
+	TArray<AActor*> ActorsToIgnore;
+	FHitResult HitResult;
+	TArray<FHitResult> Hits;
+	for (int i = 0; i < 16; i++)
+	{
+		//UKismetSystemLibrary::PrintString(this, FString::SanitizeFloat(Box->GetRelativeRotation().Pitch));
+		float Radians = (22.5f * i) * PI / 180.f;
+		//float Radian2 = (-Wheel->GetComponentRotation().Pitch * (i - 8)) * PI / 180.f;
+		float z = sin(Radians) * 70.f;
+		float x = cos(Radians) * 70.f;
+		FVector vectortransform = Wheel->GetComponentTransform().TransformPosition({x,z,0.f});
+		UTraceUtils::CapsuleTraceSingle(GetWorld(), Wheel->GetComponentLocation(),
+		vectortransform, 10.f, 30.f,
+		Wheel->GetComponentRotation(),
+		TraceTypeQuery1, false,
+		ActorsToIgnore, EDrawDebugTrace::ForOneFrame, HitResult, true,
+		FLinearColor::Green, FLinearColor::Green);
+	}
+}
 // Called to bind functionality to input
 void ACar::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 }
-
-//UKismetSystemLibrary::PrintString(this, FString::Printf(TEXT("TotalForce %s"), *TotalForce.ToString()));
-//UKismetSystemLibrary::PrintString(this, FString::Printf(TEXT("Hit Distance: %.f"), WheelComponent->GetComponentLocation().Z));
-//UKismetSystemLibrary::PrintString(this, FString::Printf(TEXT("Hit Distance: %.2f"), HitResult.Distance));
-//DrawDebugLine(GetWorld(), Wheel->GetComponentLocation(), TotalForce, FColor::Green, false, 1, 0, 1);

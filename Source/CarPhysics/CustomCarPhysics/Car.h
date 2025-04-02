@@ -26,12 +26,33 @@ public:
 	USceneComponent* BL_Wheel;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	USceneComponent* BR_Wheel;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	USceneComponent* FL_Staff_Wheel;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	USceneComponent* FR_Staff_Wheel;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	USceneComponent* BL_Staff_Wheel;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	USceneComponent* BR_Staff_Wheel;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	UStaticMeshComponent* SM_FL_Wheel;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	UStaticMeshComponent* SM_FR_Wheel;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	UStaticMeshComponent* SM_BL_Wheel;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	UStaticMeshComponent* SM_BR_Wheel;
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	UBoxComponent* Box;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	USceneComponent* Root;
 
 	UPROPERTY(VisibleAnywhere)
 	UStaticMeshComponent* StaticMesh;
@@ -50,37 +71,37 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float DampingCoefficient = 1000.0f; //lực giảm chấn của lốp xe
 	
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float CarMaxSpeedCurve = 2000.0f; //tốc độ lớn nhất của xe	
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float CarSpeedChange = 30;	//tốc độ gia tăng của xe
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float TireMass = 50.0f;	//khối lượng lốp xe
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	float WheelSteer;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float WheelSteerSpeed = 15.0f; //tăng giảm tốc độ cua của bánh xe
 
-	UPROPERTY(VIsibleAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float FrontTiresGrip = 0.8f; //độ bám đường lốp trước
 
-	UPROPERTY(VIsibleAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float RearTiresGrip = 0.8f;	//độ bám đường lốp sau
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float FrictionStatic = 1.2f; //hệ số ma sát tĩnh
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float FrictionDynamic = 0.8f; //hệ số ma sát động
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float Gravity = 980.0f; //Trọng lực
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float CarMass = 30.0f; //Khối lượng xe
 	
 	void Suspension(USceneComponent* Wheel);
@@ -90,13 +111,15 @@ protected:
 	void Friction(USceneComponent* Wheel);
 
 public:
-	void SteeringForce(USceneComponent* Wheel, float TiresGrip);
+	void SteeringForce(USceneComponent* Staff, USceneComponent* Wheel, float TiresGrip);
 
 	void SteeringWheel1(USceneComponent* Wheel, float ActionValue);
 
 	void SteeringWheel2(USceneComponent* Wheel);
 
 	void Break(USceneComponent* Wheel);
+	
+	void TraceCapsule(USceneComponent* Wheel);
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
