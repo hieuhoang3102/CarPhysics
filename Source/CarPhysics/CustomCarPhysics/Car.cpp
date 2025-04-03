@@ -23,7 +23,7 @@ ACar::ACar()
 	SetRootComponent(Root);
 	
 	Box = CreateDefaultSubobject<UBoxComponent>("Box");
-	//SetRootComponent(Box);
+	SetRootComponent(Box);
 	//Box->SetupAttachment(Root);
 	
 	StaticMesh = CreateDefaultSubobject<UStaticMeshComponent>("StaticMesh");
@@ -72,16 +72,14 @@ ACar::ACar()
 void ACar::BeginPlay()
 {
 	Super::BeginPlay();
-	
+	ActorsToIgnore.Add(this);
 }
 
-void ACar::Suspension(USceneComponent* Wheel)
+void ACar::Suspension(USceneComponent* StaffWheel, USceneComponent* Wheel)
 {
 	FVector const StartLocation = Wheel->GetComponentLocation();
 	FVector const EndLocation = Wheel->GetComponentLocation() + FVector{0, 0, -90};
 	FHitResult HitResult;
-	TArray<AActor*> ActorsToIgnore;
-	ActorsToIgnore.Add(this);
 	
 	bool bHit = UKismetSystemLibrary::LineTraceSingle(GetWorld(),StartLocation,EndLocation,static_cast<ETraceTypeQuery>(ECollisionChannel::ECC_Pawn),false,ActorsToIgnore,EDrawDebugTrace::ForOneFrame,HitResult,true,FLinearColor::Red, FLinearColor::Green);
 
@@ -117,8 +115,6 @@ void ACar::SteeringForce(USceneComponent* Staff, USceneComponent* Wheel, float T
 	FVector const StartLocation = Wheel->GetComponentLocation();
 	FVector const EndLocation = Wheel->GetComponentLocation() + FVector{0, 0, -90};
 	FHitResult HitResult;
-	TArray<AActor*> ActorsToIgnore;
-	ActorsToIgnore.Add(this);
 	
 	bool bHit = UKismetSystemLibrary::LineTraceSingle(GetWorld(),StartLocation,EndLocation,static_cast<ETraceTypeQuery>(ECollisionChannel::ECC_Pawn),false,ActorsToIgnore,EDrawDebugTrace::ForOneFrame,HitResult,true,FLinearColor::Red, FLinearColor::Green);
 
@@ -165,8 +161,6 @@ void ACar::Acceleration(USceneComponent* Wheel)
 	FVector const StartLocation = Wheel->GetComponentLocation();
 	FVector const EndLocation = Wheel->GetComponentLocation() + FVector{0, 0, -90};
 	FHitResult HitResult;
-	TArray<AActor*> ActorsToIgnore;
-	ActorsToIgnore.Add(this);
 	
 	bool bHit = UKismetSystemLibrary::LineTraceSingle(GetWorld(),StartLocation,EndLocation,static_cast<ETraceTypeQuery>(ECollisionChannel::ECC_Pawn),false,ActorsToIgnore,EDrawDebugTrace::ForOneFrame,HitResult,true,FLinearColor::Red, FLinearColor::Green);
 
@@ -185,7 +179,7 @@ void ACar::Acceleration(USceneComponent* Wheel)
 				float AvailableTorque = PowerCurve->GetFloatValue(NormalizedSpeed) * CarController->AccelInput;
 				FVector ForceMoveCar = AccelDir * AvailableTorque * CarSpeedChange; //Thay đổi giá trị CarSpeedChange để xe đi nhanh hoặc chậm 
 				Box->AddForceAtLocation(ForceMoveCar, Wheel->GetComponentLocation());
-				UKismetSystemLibrary::PrintString(this, FString::Printf(TEXT("TotalForce %s"), *ForceMoveCar.ToString()));
+				// UKismetSystemLibrary::PrintString(this, FString::Printf(TEXT("TotalForce %s"), *ForceMoveCar.ToString()));
 			}
 		}
 	}
@@ -196,8 +190,6 @@ void ACar::Friction(USceneComponent* Wheel)
 	FVector const StartLocation = Wheel->GetComponentLocation();
 	FVector const EndLocation = Wheel->GetComponentLocation() + FVector{0, 0, -90};
 	FHitResult HitResult;
-	TArray<AActor*> ActorsToIgnore;
-	ActorsToIgnore.Add(this);
 	
 	bool bHit = UKismetSystemLibrary::LineTraceSingle(GetWorld(),StartLocation,EndLocation,static_cast<ETraceTypeQuery>(ECollisionChannel::ECC_Pawn),false,ActorsToIgnore,EDrawDebugTrace::ForOneFrame,HitResult,true,FLinearColor::Red, FLinearColor::Green);
 
@@ -235,10 +227,10 @@ void ACar::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	Suspension(FL_Staff_Wheel);
-	Suspension(FR_Staff_Wheel);
-	Suspension(BL_Staff_Wheel);
-	Suspension(BR_Staff_Wheel);
+	// Suspension(FL_Staff_Wheel, FL_Wheel);
+	// Suspension(FR_Staff_Wheel, FR_Wheel);
+	// Suspension(BL_Staff_Wheel, BL_Wheel);
+	// Suspension(BR_Staff_Wheel, BR_Wheel);
 
 	SteeringForce(FL_Staff_Wheel, FL_Wheel, FrontTiresGrip);
 	SteeringForce(FR_Staff_Wheel, FR_Wheel, FrontTiresGrip);
@@ -264,30 +256,115 @@ void ACar::Tick(float DeltaTime)
 	// DrawDebugLine(GetWorld(), FR_Wheel->GetComponentLocation(),
 	// 	FR_Wheel->GetComponentLocation() + FVector::UpVector * SuspensionForce.Length(), FColor::Yellow, false, 0.02f, 100.f, 5.f);
 
-	TraceCapsule(FL_Wheel);
-	TraceCapsule(FR_Wheel);
-	TraceCapsule(BL_Wheel);
-	TraceCapsule(BR_Wheel);
+	TraceCapsule(FL_Staff_Wheel,FL_Wheel);
+	TraceCapsule(FR_Staff_Wheel,FR_Wheel);
+	TraceCapsule(BL_Staff_Wheel,BL_Wheel);
+	TraceCapsule(BR_Staff_Wheel,BR_Wheel);
 }
-void ACar::TraceCapsule(USceneComponent* Wheel)
+void ACar::TraceCapsule(USceneComponent* StaffWheel, USceneComponent* Wheel)
 {
-	TArray<AActor*> ActorsToIgnore;
+	
+	bool bHit = false;
 	FHitResult HitResult;
-	TArray<FHitResult> Hits;
-	for (int i = 0; i < 16; i++)
+	FHitResult MinHitResult;
+	
+	float MinDistance = 99999999;
+	float Radius = 70.f;
+	constexpr int InitRepeat = 9;
+	float Difference = 140.0f;
+	while (Difference > CastLimit)
 	{
-		//UKismetSystemLibrary::PrintString(this, FString::SanitizeFloat(Box->GetRelativeRotation().Pitch));
-		float Radians = (22.5f * i) * PI / 180.f;
-		//float Radian2 = (-Wheel->GetComponentRotation().Pitch * (i - 8)) * PI / 180.f;
-		float z = sin(Radians) * 70.f;
-		float x = cos(Radians) * 70.f;
-		FVector vectortransform = Wheel->GetComponentTransform().TransformPosition({x,z,0.f});
-		UTraceUtils::CapsuleTraceSingle(GetWorld(), Wheel->GetComponentLocation(),
-		vectortransform, 10.f, 30.f,
-		Wheel->GetComponentRotation(),
-		TraceTypeQuery1, false,
-		ActorsToIgnore, EDrawDebugTrace::ForOneFrame, HitResult, true,
-		FLinearColor::Green, FLinearColor::Green);
+		FVector MaxCapsule, MinCapsule;
+		float cosA = (Difference*Difference - 2.f * Radius * Radius) / (- 2.f * Radius * Radius);
+		float AngleCenter = FMath::Acos(cosA);
+		float AngleRight = (PI - AngleCenter) / 2.f;
+		
+		int iMin = -1;
+		for (int i = 0; i < InitRepeat; i++)
+		{
+			float Radians = (AngleCenter/InitRepeat * i);
+			float z = FMath::Sin(Radians + AngleRight) * 70.f;
+			float x = FMath::Cos(Radians + AngleRight) * 70.f;
+			FVector VectorTransform = Wheel->GetComponentTransform().TransformPosition({x,z,0.f});
+			bool thisHit = UTraceUtils::CapsuleTraceSingle(GetWorld(), Wheel->GetComponentLocation(),
+			VectorTransform, 10.f, 30.f,
+			Wheel->GetComponentRotation(),
+			TraceTypeQuery1, false,
+			ActorsToIgnore, EDrawDebugTrace::ForDuration, HitResult, true,
+			FLinearColor::Green, FLinearColor::Green, GetWorld()->GetDeltaSeconds()*1.2f);
+			if (thisHit && HitResult.Distance < MinDistance)
+			{
+				MinHitResult = HitResult;
+				MinDistance = HitResult.Distance;
+				iMin = i;
+			}
+			bHit = bHit || thisHit;
+		}
+		
+
+		//check the MinHitResult whether
+
+		//binary search
+		while ()
+		{
+			
+		}
+		
+		Difference = (MaxCapsule - MinCapsule).Size();
+	}
+	/*	
+	// for (int i = 0; i < InitRepeat; i++)
+	// {
+	// 	float Radians = (360.0f/InitRepeat * i) * PI / 180.f;
+	// 	//float Radians = PI / 4; 
+	// 	float z = sin(Radians) * 70.f;
+	// 	float x = cos(Radians) * 70.f;
+	// 	FVector VectorTransform = Wheel->GetComponentTransform().TransformPosition({x,z,0.f});
+	// 	bool thisHit = UTraceUtils::CapsuleTraceSingle(GetWorld(), Wheel->GetComponentLocation(),
+	// 	VectorTransform, 10.f, 30.f,
+	// 	Wheel->GetComponentRotation(),
+	// 	TraceTypeQuery1, false,
+	// 	ActorsToIgnore, EDrawDebugTrace::ForDuration, HitResult, true,
+	// 	FLinearColor::Green, FLinearColor::Green, GetWorld()->GetDeltaSeconds()*1.2f);
+	// 	if (thisHit && HitResult.Distance < MinDistance)
+	// 	{
+	// 		MinHitResult = HitResult;
+	// 		MinDistance = HitResult.Distance;
+	// 	}
+	// 	bHit = bHit || thisHit;
+	// }
+	*/
+	UKismetSystemLibrary::PrintString(this, FString::Printf(TEXT("Hit %d, Min %f"), bHit, MinDistance));
+	if(bHit)
+	{
+		//tính độ co và giãn của lò xo bánh xe (Bao gồm cả hướng)
+		FVector SpringDirection = StaffWheel->GetUpVector();
+		
+		FVector Offset = (1 - UKismetMathLibrary::NormalizeToRange(MinHitResult.Distance, 0.0f, 90.0f)) * SpringDirection;
+		
+		//Tính vận tốc theo phương của lò xo
+		FVector WheelVelocity = Box->GetPhysicsLinearVelocityAtPoint(Wheel->GetComponentLocation()); // tính vận tốc tại vị trí bánh xe
+		float VelocityAlongSpring = FVector::DotProduct(SpringDirection, WheelVelocity); //vận tốc theo hướng lò xo
+
+		//Tính lực giảm chấn
+		FVector DampingForce = VelocityAlongSpring * DampingCoefficient * SpringDirection;
+
+		//Tổng lực tác dụng lên bánh xe
+		FVector TotalForce = (Offset * Strength) - DampingForce;
+		SuspensionForce = TotalForce;
+		Box->AddForceAtLocation(TotalForce, StaffWheel->GetComponentLocation());
+
+		float DebugTime = GetWorld()->GetDeltaSeconds()*2;
+		DrawDebugDirectionalArrow(GetWorld(),StaffWheel->GetComponentLocation(), StaffWheel->GetComponentLocation() + SpringDirection * 100.f, 10.f, FColor::Magenta, false, DebugTime, 0.f, 5.f);
+		DrawDebugDirectionalArrow(GetWorld(),StaffWheel->GetComponentLocation(), StaffWheel->GetComponentLocation() + Offset.GetSafeNormal() * 100.f, 10.f, FColor::Blue, false, DebugTime, 0.f, 5.f);
+		DrawDebugDirectionalArrow(GetWorld(),StaffWheel->GetComponentLocation(), StaffWheel->GetComponentLocation() + DampingForce.GetSafeNormal() * 100.f, 10.f, FColor::Red, false, DebugTime, 0.f, 5.f);
+		
+		
+	}
+	else
+	{
+		SuspensionForce = FVector::ZeroVector;
+		Box->AddForceAtLocation(FVector::ZeroVector, StaffWheel->GetComponentLocation());
 	}
 }
 // Called to bind functionality to input

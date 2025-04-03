@@ -103,8 +103,11 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float CarMass = 30.0f; //Khối lượng xe
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float CastLimit = 2.f; //Khối lượng xe
 	
-	void Suspension(USceneComponent* Wheel);
+	void Suspension(USceneComponent* StaffWheel, USceneComponent* Wheel);
 
 	void Acceleration(USceneComponent* Wheel);
 
@@ -119,11 +122,15 @@ public:
 
 	void Break(USceneComponent* Wheel);
 	
-	void TraceCapsule(USceneComponent* Wheel);
+	void TraceCapsule(USceneComponent* StaffWheel,USceneComponent* Wheel);
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
 	FVector SuspensionForce;
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+
+private:
+	UPROPERTY()
+	TArray<AActor*> ActorsToIgnore;
 };
