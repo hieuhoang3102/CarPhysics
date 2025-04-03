@@ -1,5 +1,6 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
+
 #include "TraceUtils.h"
 #include <Engine/EngineTypes.h>
 #include "PhysicsEngine/PhysicsSettings.h"
@@ -186,3 +187,4 @@ FCollisionObjectQueryParams UTraceUtils::ConfigureCollisionObjectParams(const TA
 
 	return ObjectParams;
 }
+

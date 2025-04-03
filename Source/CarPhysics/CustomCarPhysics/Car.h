@@ -105,7 +105,7 @@ protected:
 	float CarMass = 30.0f; //Khối lượng xe
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float CastLimit = 2.f; //Khối lượng xe
+	float CastLimit = 20.f; //Khối lượng xe
 	
 	void Suspension(USceneComponent* StaffWheel, USceneComponent* Wheel);
 
@@ -119,8 +119,6 @@ public:
 	void SteeringWheel1(USceneComponent* Wheel, float ActionValue);
 
 	void SteeringWheel2(USceneComponent* Wheel);
-
-	void Break(USceneComponent* Wheel);
 	
 	void TraceCapsule(USceneComponent* StaffWheel,USceneComponent* Wheel);
 	// Called every frame
