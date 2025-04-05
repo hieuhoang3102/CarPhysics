@@ -222,21 +222,21 @@ void ACar::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	// Suspension(FL_Staff_Wheel, FL_Wheel);
-	// Suspension(FR_Staff_Wheel, FR_Wheel);
-	// Suspension(BL_Staff_Wheel, BL_Wheel);
-	// Suspension(BR_Staff_Wheel, BR_Wheel);
+	Suspension(FL_Staff_Wheel, FL_Wheel);
+	Suspension(FR_Staff_Wheel, FR_Wheel);
+	Suspension(BL_Staff_Wheel, BL_Wheel);
+	Suspension(BR_Staff_Wheel, BR_Wheel);
 
 	SteeringForce(FL_Staff_Wheel, FL_Wheel, FrontTiresGrip);
 	SteeringForce(FR_Staff_Wheel, FR_Wheel, FrontTiresGrip);
 	SteeringForce(BL_Staff_Wheel, BL_Wheel, RearTiresGrip);
 	SteeringForce(BR_Staff_Wheel, BR_Wheel, RearTiresGrip);
-
+	
 	Acceleration(FL_Wheel);
 	Acceleration(FR_Wheel);
 	Acceleration(BL_Wheel);
 	Acceleration(BR_Wheel);
-
+	
 	Friction(FL_Wheel);
 	Friction(FR_Wheel);
 	Friction(BL_Wheel);
@@ -252,16 +252,16 @@ void ACar::TraceCapsule(USceneComponent* StaffWheel, USceneComponent* Wheel)
 	
 	bool bHit = false;
 	FHitResult HitResult;
-	FHitResult MinHitResult, MaxHitResult;
-	MinHitResult.TraceStart = Wheel->GetComponentLocation();
+	FHitResult MaxHitResult;
+	SuspensionForceHit = MinHitResult;
 	FVector PreTransform = {70.f,0.f,0.f};
-	MinHitResult.TraceEnd = Wheel->GetComponentTransform().TransformPosition( {70.f,0.f,0.f});
+	
 	float MinDistance = 99999999.f;
-	float Radius = 70.f;
-	constexpr int InitRepeat = 8;
 	float DifferenceAngle = 360.0f;
 	while (DifferenceAngle > CastLimit)
 	{
+		constexpr int InitRepeat = 16;
+		float Radius = 70.f;
 		float x,y, Radians;
 		FVector VectorTransform;
 		float AngleRight = FMath::Asin(PreTransform.Y / Radius);
@@ -287,116 +287,120 @@ void ACar::TraceCapsule(USceneComponent* StaffWheel, USceneComponent* Wheel)
 			}
 			bHit = bHit || thisHit;
 		}
+		
 		//check the MinHitResult whether
-	
-		//binary search
-		FHitResult RightHit, LeftHit;
-		bool bHit1 = false, bHit2 = false;
-		FVector PreTransform1, PreTransform2;
-		float LeftRadians = (DifferenceAngle / InitRepeat * (iMin + 1)) * PI / 180.f + AngleRight,
-			RightRadians = (DifferenceAngle / InitRepeat * (iMin - 1)) * PI / 180.f + AngleRight;
-		y = FMath::Sin(RightRadians) * Radius;
-		x = FMath::Cos(RightRadians) * Radius;
-		PreTransform1 = {x,y,0.f};
-		VectorTransform = Wheel->GetComponentTransform().TransformPosition({x,y,0.f});
-		bHit1 = UTraceUtils::CapsuleTraceSingle(GetWorld(), Wheel->GetComponentLocation(),
-			VectorTransform, 10.f, 30.f,
-			Wheel->GetComponentRotation(),
-			TraceTypeQuery1, false,
-			ActorsToIgnore, EDrawDebugTrace::ForDuration, RightHit, true,
-			FLinearColor::Green, FLinearColor::Green, GetWorld()->GetDeltaSeconds()*1.2f);
-		
-		y = FMath::Sin(LeftRadians) * Radius;
-		x = FMath::Cos(LeftRadians) * Radius;
-		PreTransform2 = {x,y,0.f};
-		VectorTransform = Wheel->GetComponentTransform().TransformPosition({x,y,0.f});
-		bHit2 = UTraceUtils::CapsuleTraceSingle(GetWorld(), Wheel->GetComponentLocation(),
-			VectorTransform, 10.f, 30.f,
-			Wheel->GetComponentRotation(),
-			TraceTypeQuery1, false,
-			ActorsToIgnore, EDrawDebugTrace::ForDuration, LeftHit, true,
-			FLinearColor::Green, FLinearColor::Green, GetWorld()->GetDeltaSeconds()*1.2f);
-		
-		int InitRepeat2 = InitRepeat;
-		
-		while (!bHit1 && !bHit2 && InitRepeat2 < 65)
+		if (bHit)
 		{
-			InitRepeat2 *= 2;
-			
-			RightRadians += (DifferenceAngle / InitRepeat2)* PI / 180.f;
+			//binary search
+			FHitResult RightHit, LeftHit;
+			bool bHit1 = false, bHit2 = false;
+			FVector PreTransform1, PreTransform2;
+			float LeftRadians = (DifferenceAngle / InitRepeat * (iMin + 1)) * PI / 180.f + AngleRight,
+				RightRadians = (DifferenceAngle / InitRepeat * (iMin - 1)) * PI / 180.f + AngleRight;
 			y = FMath::Sin(RightRadians) * Radius;
 			x = FMath::Cos(RightRadians) * Radius;
 			PreTransform1 = {x,y,0.f};
 			VectorTransform = Wheel->GetComponentTransform().TransformPosition({x,y,0.f});
 			bHit1 = UTraceUtils::CapsuleTraceSingle(GetWorld(), Wheel->GetComponentLocation(),
-			VectorTransform, 10.f, 30.f,
-			Wheel->GetComponentRotation(),
-			TraceTypeQuery1, false,
-			ActorsToIgnore, EDrawDebugTrace::ForDuration, RightHit, true,
-			FLinearColor::Green, FLinearColor::Green, GetWorld()->GetDeltaSeconds()*1.2f);
-			//---------------------------------------
-			LeftRadians -= (DifferenceAngle / InitRepeat2)* PI / 180.f;
+				VectorTransform, 10.f, 30.f,
+				Wheel->GetComponentRotation(),
+				TraceTypeQuery1, false,
+				ActorsToIgnore, EDrawDebugTrace::ForDuration, RightHit, true,
+				FLinearColor::Green, FLinearColor::Green, GetWorld()->GetDeltaSeconds()*1.2f);
+			
 			y = FMath::Sin(LeftRadians) * Radius;
 			x = FMath::Cos(LeftRadians) * Radius;
 			PreTransform2 = {x,y,0.f};
 			VectorTransform = Wheel->GetComponentTransform().TransformPosition({x,y,0.f});
 			bHit2 = UTraceUtils::CapsuleTraceSingle(GetWorld(), Wheel->GetComponentLocation(),
-			VectorTransform, 10.f, 30.f,
-			Wheel->GetComponentRotation(),
-			TraceTypeQuery1, false,
-			ActorsToIgnore, EDrawDebugTrace::ForDuration, LeftHit, true,
-			FLinearColor::Green, FLinearColor::Green, GetWorld()->GetDeltaSeconds()*1.2f);
-		}
-	
-		if (bHit1 && bHit2)
-		{
-			if (RightHit.Distance < LeftHit.Distance)
-				bHit2 = false;
-			else
-				bHit1 = false;		
-		}
+				VectorTransform, 10.f, 30.f,
+				Wheel->GetComponentRotation(),
+				TraceTypeQuery1, false,
+				ActorsToIgnore, EDrawDebugTrace::ForDuration, LeftHit, true,
+				FLinearColor::Green, FLinearColor::Green, GetWorld()->GetDeltaSeconds()*1.2f);
+			
+			int InitRepeat2 = InitRepeat;
+			
+			while (!bHit1 && !bHit2 && InitRepeat2 < 65)
+			{
+				InitRepeat2 *= 2;
+				
+				RightRadians += (DifferenceAngle / InitRepeat2)* PI / 180.f;
+				y = FMath::Sin(RightRadians) * Radius;
+				x = FMath::Cos(RightRadians) * Radius;
+				PreTransform1 = {x,y,0.f};
+				VectorTransform = Wheel->GetComponentTransform().TransformPosition({x,y,0.f});
+				bHit1 = UTraceUtils::CapsuleTraceSingle(GetWorld(), Wheel->GetComponentLocation(),
+				VectorTransform, 10.f, 30.f,
+				Wheel->GetComponentRotation(),
+				TraceTypeQuery1, false,
+				ActorsToIgnore, EDrawDebugTrace::ForDuration, RightHit, true,
+				FLinearColor::Green, FLinearColor::Green, GetWorld()->GetDeltaSeconds()*1.2f);
+				//---------------------------------------
+				LeftRadians -= (DifferenceAngle / InitRepeat2)* PI / 180.f;
+				y = FMath::Sin(LeftRadians) * Radius;
+				x = FMath::Cos(LeftRadians) * Radius;
+				PreTransform2 = {x,y,0.f};
+				VectorTransform = Wheel->GetComponentTransform().TransformPosition({x,y,0.f});
+				bHit2 = UTraceUtils::CapsuleTraceSingle(GetWorld(), Wheel->GetComponentLocation(),
+				VectorTransform, 10.f, 30.f,
+				Wheel->GetComponentRotation(),
+				TraceTypeQuery1, false,
+				ActorsToIgnore, EDrawDebugTrace::ForDuration, LeftHit, true,
+				FLinearColor::Green, FLinearColor::Green, GetWorld()->GetDeltaSeconds()*1.2f);
+			}
 		
-		if (bHit1)
-		{
-			HitResult = MinHitResult;
-			MinHitResult = RightHit;
-			MaxHitResult = HitResult;
-			PreTransform = PreTransform1;
+			if (bHit1 && bHit2)
+			{
+				if (RightHit.Distance < LeftHit.Distance)
+					bHit2 = false;
+				else
+					bHit1 = false;		
+			}
+			
+			if (bHit1)
+			{
+				HitResult = MinHitResult;
+				MinHitResult = RightHit;
+				MaxHitResult = HitResult;
+				PreTransform = PreTransform1;
+			}
+			else
+			{
+				MaxHitResult = LeftHit;
+			}
+		
+			DifferenceAngle /= InitRepeat2;
 		}
 		else
 		{
-			MaxHitResult = LeftHit;
+			DifferenceAngle = 0.f;
 		}
-	
-		DifferenceAngle /= InitRepeat2;
 	}
 	
-	/*for (int i = 0; i < InitRepeat; i++)
-	{
-		float Radians = (360.0f/InitRepeat * i) * PI / 180.f;
-		//float Radians = PI / 4; 
-		float z = sin(Radians) * Radius;
-		float x = cos(Radians) * Radius;
-		FVector VectorTransform = Wheel->GetComponentTransform().TransformPosition({x,z,0.f});
-		bool thisHit = UTraceUtils::CapsuleTraceSingle(GetWorld(), Wheel->GetComponentLocation(),
-		VectorTransform, 10.f, 30.f,
-		Wheel->GetComponentRotation(),
-		TraceTypeQuery1, false,
-		ActorsToIgnore, EDrawDebugTrace::ForDuration, HitResult, true,
-		FLinearColor::Green, FLinearColor::Green, GetWorld()->GetDeltaSeconds()*1.2f);
-		if (thisHit && HitResult.Distance < MinDistance)
-		{
-			MinHitResult = HitResult;
-			MinDistance = HitResult.Distance;
-		}
-		bHit = bHit || thisHit;
-	}*/
+	// // Vector định hướng trace
+	FVector TraceStart = MinHitResult.TraceStart;
+	FVector TraceEnd = MinHitResult.TraceStart + FVector::DownVector * 70.f;
+	FVector ImpactPoint = MinHitResult.ImpactPoint;
 	
-	UKismetSystemLibrary::PrintString(this, FString::Printf(TEXT("Hit %d, Min %f"), bHit, MinDistance));
-	DrawDebugDirectionalArrow(GetWorld(),MinHitResult.TraceStart, MinHitResult.TraceEnd, 10.f, FColor::Black, false, GetWorld()->GetDeltaSeconds()*2, 0.f, 5.f);
-
+	float ToImpact = (ImpactPoint - TraceStart).Length();
+	float EndToImpact = (ImpactPoint - TraceEnd).Length();
+	if (ToImpact > 76.f)
+	{
+		float cosA = (70.f*70.f + EndToImpact*EndToImpact - ToImpact*ToImpact) / (140.f*EndToImpact);
+		MinHitResult.Distance = 70.f - cosA * EndToImpact;
+	}
+	else
+	{
+		float cosA = PI - FMath::Acos(70.f*70.f + EndToImpact*EndToImpact - ToImpact*ToImpact) / (140.f*EndToImpact);
+		MinHitResult.Distance = 70.f + FMath::Cos(cosA) * EndToImpact;
+	}
+	
 	if(bHit)
 	{
+		UKismetSystemLibrary::PrintString(this, FString::Printf(TEXT("Hit %d, Min %f"), bHit, MinHitResult.Distance));
+		DrawDebugLine(GetWorld(),MinHitResult.TraceStart, MinHitResult.ImpactPoint, FColor::Black, false, GetWorld()->GetDeltaSeconds()*2, 0.f, 3.f);
+
 		//tính độ co và giãn của lò xo bánh xe (Bao gồm cả hướng)
 		FVector SpringDirection = StaffWheel->GetUpVector();
 		
@@ -418,8 +422,6 @@ void ACar::TraceCapsule(USceneComponent* StaffWheel, USceneComponent* Wheel)
 		DrawDebugDirectionalArrow(GetWorld(),StaffWheel->GetComponentLocation(), StaffWheel->GetComponentLocation() + SpringDirection * 100.f, 10.f, FColor::Magenta, false, DebugTime, 0.f, 5.f);
 		DrawDebugDirectionalArrow(GetWorld(),StaffWheel->GetComponentLocation(), StaffWheel->GetComponentLocation() + Offset.GetSafeNormal() * 100.f, 10.f, FColor::Blue, false, DebugTime, 0.f, 5.f);
 		DrawDebugDirectionalArrow(GetWorld(),StaffWheel->GetComponentLocation(), StaffWheel->GetComponentLocation() + DampingForce.GetSafeNormal() * 100.f, 10.f, FColor::Red, false, DebugTime, 0.f, 5.f);
-		
-		
 	}
 	else
 	{
